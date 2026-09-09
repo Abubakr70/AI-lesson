@@ -1,12 +1,12 @@
 # AI-lesson
 It is created for AI projects at school
-# AI lesso
+# AI lesson
 
 ## why 
 
-** intelligent
-* simply lovely
+** intelligent **
+* simply lovely * 
 - shortlist
-
+  
 
 [https://www.chess.com/home]

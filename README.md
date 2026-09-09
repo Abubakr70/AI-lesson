@@ -4,8 +4,8 @@ It is created for AI projects at school
 
 ## why 
 
-** intelligent **
-* simply lovely * 
+**intelligent**
+*simply lovely* 
 - shortlist
   
 

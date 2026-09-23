@@ -26,4 +26,13 @@
 
 - Availability: Digital assistants work twenty-four hours a day without getting tired.
 
+[https://www.instagram.com/]
+
+
+
+[https://claude.ai/artifact/TyjaKNmkVhXpj1Gc1R71Rf]
+
+
+
+
 

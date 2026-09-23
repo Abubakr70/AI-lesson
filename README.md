@@ -26,11 +26,12 @@
 
 - Availability: Digital assistants work twenty-four hours a day without getting tired.
 
-[https://www.instagram.com/]
+[https://www.instagram.com/] - *my link in instagram*
 
+[https://claude.ai/artifact/KFGF7DRWWcbLk8ZSNujLnq] - *my project about forest protecting*
 
+[https://claude.ai/artifact/TyjaKNmkVhXpj1Gc1R71Rf] - *racing game*
 
-[https://claude.ai/artifact/TyjaKNmkVhXpj1Gc1R71Rf]
 
 
 

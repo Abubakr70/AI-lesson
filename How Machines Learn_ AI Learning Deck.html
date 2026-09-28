@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Machines Learn</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1240;--bg2:#141d5c;--ink:#f2f0ff;--mute:#aeb4e6;--a:#2ee6c5;--b:#ff7a93;--c:#ffc857;--line:#3a4590;
+--serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;box-sizing:border-box}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#0b1240;color:var(--ink);font-family:var(--sans)}
+body{overflow:hidden;background:radial-gradient(1200px 700px at 80% -10%,#26327f 0%,transparent 60%),var(--bg)}
+.bar{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 18px 10px;background:linear-gradient(#0b1240,#0b124000)}
+.lang button{background:none;border:1px solid var(--line);color:var(--mute);padding:6px 12px;border-radius:20px;margin-left:6px;cursor:pointer;font:600 13px var(--sans)}
+.lang button.on{background:var(--a);color:#062;border-color:var(--a)}
+.lang button:focus-visible,.nav button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.deck{height:100%;display:flex;transition:transform .6s cubic-bezier(.7,0,.2,1)}
+.s{min-width:100%;height:100%;overflow-y:auto;padding:70px clamp(18px,5vw,72px) 90px;display:flex;flex-direction:column;justify-content:center}
+h1{font:800 clamp(38px,7vw,88px)/1.02 var(--serif);letter-spacing:-.02em;max-width:14ch}
+h2{font:800 clamp(26px,4vw,46px)/1.1 var(--serif);margin-bottom:8px}
+.lead{color:var(--mute);font-size:clamp(15px,1.8vw,20px);max-width:60ch;margin:12px 0 22px;line-height:1.5}
+.g{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:linear-gradient(160deg,#1b2670,#121a55);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{font:600 18px var(--serif);margin:10px 0 6px}
+.card p,.card li{color:var(--mute);font-size:14.5px;line-height:1.55}
+.card ul{padding-left:18px;margin-top:8px}
+.card b{color:var(--ink)}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin-top:28px}
+.stats div{border-left:3px solid var(--a);padding-left:12px}
+.stats strong{display:block;font:800 30px var(--serif);color:var(--a)}
+.stats span{color:var(--mute);font-size:13px}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center}
+@media(max-width:800px){.hero,.two{grid-template-columns:1fr!important}.hero svg{max-height:260px}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:center}
+.step{display:flex;gap:12px;margin-bottom:12px}
+.step i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--a);color:#062;font:800 14px var(--sans);display:grid;place-items:center;font-style:normal}
+.step p{color:var(--mute);font-size:14.5px;line-height:1.5}.step b{color:var(--ink)}
+.tl{position:relative;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));border-top:2px solid var(--line);padding-top:18px}
+.tl div{position:relative}
+.tl div:before{content:"";position:absolute;top:-26px;left:0;width:14px;height:14px;border-radius:50%;background:var(--b);border:3px solid var(--bg)}
+.tl strong{font:800 24px var(--serif);color:var(--c)}
+.tl p{color:var(--mute);font-size:13.5px;line-height:1.5;margin-top:4px}
+.tl b{color:var(--ink)}
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:14px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(#0b124000,#0b1240)}
+.nav button.ar{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#1b2670;color:var(--ink);font-size:18px;cursor:pointer}
+.dots button{width:10px;height:10px;border-radius:50%;border:0;background:var(--line);margin:0 4px;cursor:pointer;padding:0}
+.dots button.on{background:var(--a);width:26px;border-radius:6px}
+@media(prefers-reduced-motion:reduce){.deck{transition:none}}
+</style></head><body>
+<div class="bar"><b style="font:800 15px var(--serif)">AI · ML</b><div class="lang" id="lang"></div></div>
+<div class="deck" id="deck"></div>
+<div class="nav"><button class="ar" id="pv" aria-label="Previous">‹</button><div class="dots" id="dots"></div><button class="ar" id="nx" aria-label="Next">›</button></div>
+<script>
+const LG=['en','ru','uz'],NM=['English','Русский','O‘zbek'];let li=0,cur=0;
+try{const s=localStorage.getItem('lg');if(s)li=+s}catch(e){}
+const NET=(()=>{const cols=[[60,110,170,230,290],[40,100,160,220,280,340].map(y=>y-10),[60,110,170,230,290],[130,210]];const xs=[70,230,390,540];let o='<svg viewBox="0 0 610 340" width="100%" role="img" aria-label="neural network">';
+const P=cols.map((c,i)=>c.map(y=>[xs[i],y+ (i==3?0:0)]));
+for(let i=0;i<3;i++)P[i].forEach(a=>P[i+1].forEach(b=>o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#5f6cd0" stroke-opacity=".45"/>`));
+const col=['#2ee6c5','#ffc857','#ff7a93','#f2f0ff'];
+P.forEach((l,i)=>l.forEach(p=>o+=`<circle cx="${p[0]}" cy="${p[1]}" r="12" fill="${col[i]}" stroke="#0b1240" stroke-width="3"/>`));
+return o+'</svg>'})();
+function slides(){const L=(a,b,c)=>[a,b,c][li];return [
+`<div class="hero"><div><p class="lead" style="margin:0 0 14px;color:var(--a)">${L('Artificial intelligence · Machine learning','Искусственный интеллект · Машинное обучение','Sun’iy intellekt · Mashinaviy o‘rganish')}</p>
+<h1>${L('How machines learn','Как учатся машины','Mashinalar qanday o‘rganadi')}</h1>
+<p class="lead">${L('From counting examples to models with hundreds of billions of adjustable numbers: a guide to neural networks and the learning revolution behind modern AI.','От подсчёта примеров до моделей с сотнями миллиардов настраиваемых чисел: путеводитель по нейросетям и революции обучения, стоящей за современным ИИ.','Misollarni sanashdan yuz milliardlab sozlanuvchi songa ega modellargacha: neyron tarmoqlar va zamonaviy sun’iy intellekt ortidagi o‘rganish inqilobi haqida qo‘llanma.')}</p></div>${NET}</div>
+<div class="stats"><div><strong>1957</strong><span>${L('first perceptron','первый перцептрон','birinchi perseptron')}</span></div>
+<div><strong>14M</strong><span>${L('images in ImageNet','изображений в ImageNet','ImageNet’dagi rasmlar')}</span></div>
+<div><strong>175B</strong><span>${L('parameters in GPT-3 (2020)','параметров в GPT-3 (2020)','GPT-3 parametrlari (2020)')}</span></div></div>`,
+
+`<h2>${L('Four ways a machine learns','Четыре способа обучения машины','Mashina o‘rganishning to‘rt usuli')}</h2>
+<p class="lead">${L('Every AI system is trained on data. What differs is the kind of feedback it receives.','Любая ИИ-система обучается на данных. Различается лишь тип обратной связи.','Har bir sun’iy intellekt tizimi ma’lumotlarda o‘qitiladi. Farq — olinadigan qayta aloqa turida.')}</p>
+<div class="g">
+<div class="card"><svg viewBox="0 0 120 60" width="120"><circle cx="20" cy="20" r="7" fill="#2ee6c5"/><circle cx="38" cy="38" r="7" fill="#2ee6c5"/><rect x="72" y="14" width="14" height="14" fill="#ff7a93"/><rect x="92" y="34" width="14" height="14" fill="#ff7a93"/><line x1="58" y1="4" x2="58" y2="56" stroke="#ffc857" stroke-dasharray="4"/></svg>
+<h3>${L('Supervised','С учителем','Nazorat ostida')}</h3><p>${L('Learns from labelled examples: this email is spam, that one is not.','Учится на размеченных примерах: это письмо — спам, а это нет.','Belgilangan misollardan o‘rganadi: bu xat spam, bu esa yo‘q.')}</p><ul><li>${L('Medical image diagnosis','Диагностика по снимкам','Tibbiy tasvirlar tashxisi')}</li><li>${L('Speech recognition','Распознавание речи','Nutqni tanish')}</li><li>${L('Price prediction','Прогноз цен','Narxlarni bashorat qilish')}</li></ul></div>
+<div class="card"><svg viewBox="0 0 120 60" width="120"><g fill="#2ee6c5"><circle cx="14" cy="18" r="5"/><circle cx="26" cy="30" r="5"/><circle cx="18" cy="42" r="5"/></g><g fill="#ffc857"><circle cx="80" cy="14" r="5"/><circle cx="96" cy="26" r="5"/><circle cx="86" cy="40" r="5"/><circle cx="104" cy="44" r="5"/></g></svg>
+<h3>${L('Unsupervised','Без учителя','Nazoratsiz')}</h3><p>${L('No labels. The model discovers hidden structure and groups on its own.','Без меток. Модель сама находит скрытую структуру и группы.','Belgilarsiz. Model yashirin tuzilma va guruhlarni o‘zi topadi.')}</p><ul><li>${L('Customer segmentation','Сегментация клиентов','Mijozlarni segmentlash')}</li><li>${L('Fraud and anomaly detection','Поиск мошенничества и аномалий','Firibgarlik va anomaliyalarni aniqlash')}</li><li>${L('Data compression','Сжатие данных','Ma’lumotlarni siqish')}</li></ul></div>
+<div class="card"><svg viewBox="0 0 120 60" width="120"><polyline points="6,50 30,36 52,42 78,20 112,8" fill="none" stroke="#ff7a93" stroke-width="3"/><circle cx="112" cy="8" r="6" fill="#ffc857"/></svg>
+<h3>${L('Reinforcement','С подкреплением','Mustahkamlash bilan')}</h3><p>${L('An agent tries actions and is rewarded or penalised. AlphaGo beat Go champion Lee Sedol in 2016.','Агент пробует действия и получает награду или штраф. AlphaGo в 2016 году победил чемпиона по го Ли Седоля.','Agent harakatlarni sinaydi va mukofot yoki jarima oladi. AlphaGo 2016-yilda go chempioni Li Sedolni yutdi.')}</p><ul><li>${L('Robotics','Робототехника','Robototexnika')}</li><li>${L('Game-playing agents','Игровые агенты','O‘yin agentlari')}</li><li>${L('Data-centre cooling','Охлаждение дата-центров','Ma’lumotlar markazini sovutish')}</li></ul></div>
+<div class="card"><svg viewBox="0 0 120 60" width="120"><text x="4" y="24" fill="#f2f0ff" font-size="13" font-family="Inter">The cat sat on the</text><rect x="4" y="34" width="50" height="16" rx="8" fill="#2ee6c5"/><text x="14" y="46" fill="#062" font-size="12" font-weight="700">mat ?</text></svg>
+<h3>${L('Self-supervised','Самообучение','O‘z-o‘zini o‘rgatish')}</h3><p>${L('The data supplies its own labels: predict the next word. This powers large language models.','Данные сами создают метки: предскажи следующее слово. На этом строятся большие языковые модели.','Ma’lumotlar o‘z belgilarini beradi: keyingi so‘zni top. Katta til modellari shunga asoslanadi.')}</p><ul><li>${L('Chatbots and assistants','Чат-боты и ассистенты','Chatbotlar va yordamchilar')}</li><li>${L('Code generation','Генерация кода','Kod yozish')}</li><li>${L('Translation','Перевод','Tarjima')}</li></ul></div></div>`,
+
+`<div class="two"><div>${NET}</div><div><h2>${L('Inside the learning loop','Внутри цикла обучения','O‘rganish sikli ichida')}</h2>
+<p class="lead" style="margin-top:6px">${L('A neural network is layers of simple units joined by weights, adjustable numbers. Training tunes them.','Нейросеть — это слои простых элементов, связанных весами, то есть настраиваемыми числами. Обучение их подбирает.','Neyron tarmoq — vaznlar, ya’ni sozlanuvchi sonlar bilan bog‘langan oddiy elementlar qatlamlari. O‘qitish ularni sozlaydi.')}</p>
+<div class="step"><i>1</i><p><b>${L('Forward pass.','Прямой проход.','To‘g‘ri o‘tish.')}</b> ${L('Data flows through the layers and produces a prediction.','Данные проходят через слои и дают прогноз.','Ma’lumot qatlamlar orqali o‘tib, bashorat beradi.')}</p></div>
+<div class="step"><i>2</i><p><b>${L('Loss.','Ошибка.','Xato.')}</b> ${L('A function measures how far the prediction is from the truth.','Функция измеряет, насколько прогноз далёк от истины.','Funksiya bashorat haqiqatdan qanchalik uzoqligini o‘lchaydi.')}</p></div>
+<div class="step"><i>3</i><p><b>${L('Backpropagation.','Обратное распространение.','Teskari tarqalish.')}</b> ${L('Calculus traces how much each weight contributed to the error.','Математический анализ вычисляет вклад каждого веса в ошибку.','Matematik hisob har bir vaznning xatoga hissasini aniqlaydi.')}</p></div>
+<div class="step"><i>4</i><p><b>${L('Gradient descent.','Градиентный спуск.','Gradiyent tushish.')}</b> ${L('Each weight is nudged to reduce error. Repeat billions of times.','Каждый вес слегка сдвигается, чтобы уменьшить ошибку. Повторяется миллиарды раз.','Har bir vazn xatoni kamaytirish uchun biroz suriladi. Bu milliardlab marta takrorlanadi.')}</p></div></div></div>`,
+
+`<h2>${L('Seventy years to a breakthrough','Семьдесят лет до прорыва','Yutuqqa yetgan yetmish yil')}</h2>
+<p class="lead">${L('Progress came when three things met: better algorithms, huge datasets and powerful GPUs.','Прорыв случился, когда сошлись три вещи: лучшие алгоритмы, огромные датасеты и мощные GPU.','Yutuq uchta narsa uchrashganda keldi: yaxshi algoritmlar, ulkan ma’lumotlar to‘plami va kuchli GPUlar.')}</p>
+<div class="tl">
+<div><strong>1957</strong><p><b>${L('Perceptron','Перцептрон','Perseptron')}</b><br>${L('Frank Rosenblatt builds the first learning neural machine.','Фрэнк Розенблатт создаёт первую обучаемую нейронную машину.','Frenk Rozenblatt birinchi o‘rganuvchi neyron mashinani yaratadi.')}</p></div>
+<div><strong>1986</strong><p><b>${L('Backpropagation','Обратное распространение','Teskari tarqalish')}</b><br>${L('Rumelhart, Hinton and Williams popularise training of multi-layer networks.','Румельхарт, Хинтон и Уильямс популяризируют обучение многослойных сетей.','Rumelxart, Xinton va Uilyams ko‘p qatlamli tarmoqlarni o‘qitishni ommalashtiradi.')}</p></div>
+<div><strong>2012</strong><p><b>AlexNet</b><br>${L('Wins ImageNet with 15.3% error against 26.2% for the runner-up; deep learning takes off.','Побеждает в ImageNet с ошибкой 15,3% против 26,2% у второго места; начинается бум глубокого обучения.','ImageNet’da 15,3% xato bilan g‘alaba qozonadi (ikkinchi o‘rin — 26,2%); chuqur o‘rganish avj oladi.')}</p></div>
+<div><strong>2017</strong><p><b>Transformer</b><br>${L('“Attention Is All You Need” introduces the architecture behind today’s language models.','«Attention Is All You Need» представляет архитектуру, лежащую в основе современных языковых моделей.','«Attention Is All You Need» bugungi til modellari asosidagi arxitekturani taqdim etadi.')}</p></div>
+<div><strong>2022</strong><p><b>ChatGPT</b><br>${L('Conversational AI reaches an estimated 100 million users within about two months.','Разговорный ИИ набирает около 100 млн пользователей примерно за два месяца.','Suhbatdosh sun’iy intellekt taxminan ikki oyda 100 million foydalanuvchiga yetadi.')}</p></div>
+<div><strong>2024</strong><p><b>Nobel Prizes</b><br>${L('Physics: Hopfield and Hinton. Chemistry: Hassabis, Jumper and Baker for AlphaFold and protein design.','Физика: Хопфилд и Хинтон. Химия: Хассабис, Джампер и Бейкер за AlphaFold и дизайн белков.','Fizika: Xopfild va Xinton. Kimyo: Xassabis, Jamper va Beyker — AlphaFold va oqsil dizayni uchun.')}</p></div></div>`,
+
+`<h2>${L('Real impact, real responsibility','Реальное влияние и реальная ответственность','Haqiqiy ta’sir va haqiqiy mas’uliyat')}</h2>
+<p class="lead">${L('Learning machines already change science, health and education, and they raise questions we must answer.','Обучающиеся машины уже меняют науку, медицину и образование и ставят вопросы, на которые нужно отвечать.','O‘rganuvchi mashinalar fan, tibbiyot va ta’limni allaqachon o‘zgartirmoqda va biz javob berishimiz kerak bo‘lgan savollar tug‘dirmoqda.')}</p>
+<div class="g">
+<div class="card"><h3 style="color:var(--a)">${L('Science and health','Наука и медицина','Fan va sog‘liq')}</h3><ul><li>${L('AlphaFold predicted structures for over 200 million proteins.','AlphaFold предсказал структуры более 200 млн белков.','AlphaFold 200 milliondan ortiq oqsil tuzilmasini bashorat qildi.')}</li><li>${L('Models help detect cancers on scans and speed up drug discovery.','Модели помогают находить рак на снимках и ускоряют поиск лекарств.','Modellar skanerlarda saratonni topishga va dori izlashni tezlashtirishga yordam beradi.')}</li></ul></div>
+<div class="card"><h3 style="color:var(--c)">${L('Everyday life','Повседневная жизнь','Kundalik hayot')}</h3><ul><li>${L('Personal tutors adapt lessons to each student.','Персональные репетиторы подстраивают уроки под каждого ученика.','Shaxsiy repetitorlar darslarni har bir o‘quvchiga moslaydi.')}</li><li>${L('Driver assistance, weather forecasting, real-time translation.','Помощь водителю, прогноз погоды, перевод в реальном времени.','Haydovchiga yordam, ob-havo bashorati, real vaqt tarjimasi.')}</li></ul></div>
+<div class="card"><h3 style="color:var(--b)">${L('Open challenges','Открытые проблемы','Ochiq muammolar')}</h3><ul><li>${L('Bias inherited from training data.','Предвзятость, унаследованная из обучающих данных.','O‘qitish ma’lumotlaridan meros bo‘lgan tarafkashlik.')}</li><li>${L('Confident but wrong answers (“hallucinations”).','Уверенные, но неверные ответы («галлюцинации»).','Ishonchli, ammo noto‘g‘ri javoblar («gallyutsinatsiyalar»).')}</li><li>${L('Privacy, energy use and the future of work.','Приватность, энергопотребление и будущее труда.','Maxfiylik, energiya sarfi va mehnat kelajagi.')}</li></ul></div></div>
+<p class="lead" style="margin-top:26px;color:var(--ink);font:600 clamp(18px,2.4vw,28px)/1.35 var(--serif);max-width:38ch">${L('The best future is a partnership: human judgment guiding machine learning.','Лучшее будущее — партнёрство: человеческое суждение направляет машинное обучение.','Eng yaxshi kelajak — hamkorlik: inson mulohazasi mashinaviy o‘rganishni yo‘naltiradi.')}</p>`];}
+function render(){const d=document.getElementById('deck');d.innerHTML=slides().map(h=>`<section class="s">${h}</section>`).join('');
+document.getElementById('lang').innerHTML=LG.map((c,i)=>`<button class="${i==li?'on':''}" data-i="${i}">${NM[i]}</button>`).join('');
+document.getElementById('dots').innerHTML=LG.length&&[0,1,2,3,4].map(i=>`<button class="${i==cur?'on':''}" data-p="${i}" aria-label="Slide ${i+1}"></button>`).join('');
+document.documentElement.lang=LG[li];go(cur);}
+function go(n){cur=Math.max(0,Math.min(4,n));document.getElementById('deck').style.transform=`translateX(-${cur*100}%)`;
+document.querySelectorAll('.dots button').forEach((b,i)=>b.classList.toggle('on',i==cur));}
+document.addEventListener('click',e=>{const t=e.target;if(t.dataset.i!==undefined){li=+t.dataset.i;try{localStorage.setItem('lg',li)}catch(x){}render()}if(t.dataset.p!==undefined)go(+t.dataset.p)});
+document.getElementById('pv').onclick=()=>go(cur-1);document.getElementById('nx').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key=='ArrowRight')go(cur+1);if(e.key=='ArrowLeft')go(cur-1)});
+let x0=null;document.addEventListener('touchstart',e=>x0=e.touches[0].clientX);document.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>60)go(cur+(dx<0?1:-1));x0=null});
+render();
+</script></body></html>
